@@ -38,6 +38,9 @@ def get_args():
     parser.add_argument('--only-mask', action='store_true', default=False,
                         help='download only mask wo/ flow')
 
+    parser.add_argument('--envs', nargs='+', type=str,
+                        help='selections of envs to download')
+
     parser.add_argument('--azcopy', action='store_true', default=False,
                         help='download the data with AzCopy, which is 10x faster in our test')
 
@@ -82,7 +85,7 @@ if __name__ == '__main__':
         print('Specify the type of data you want to download by --rgb/depth/seg/flow')
         exit()
 
-    # camera 
+    # camera
     cameralist = ['left', 'right', 'flow', 'mask']
     if args.only_left:
         cameralist.remove('right')
@@ -109,14 +112,15 @@ if __name__ == '__main__':
         zf = zipfile.split('/')
         filename = zf[-1]
         difflevel = zf[-2]
+        envname = zf[-3]
 
         # image/depth/seg/flow
-        filetype = filename.split('_')[0] 
+        filetype = filename.split('_')[0]
         # left/right/flow/mask
         cameratype = filename.split('.')[0].split('_')[-1]
-        
-        if (difflevel in levellist) and (filetype in typelist) and (cameratype in cameralist):
-            downloadlist.append(zipfile) 
+
+        if (difflevel in levellist) and (filetype in typelist) and (cameratype in cameralist) and (envname in args.envs):
+            downloadlist.append(zipfile)
 
     if len(downloadlist)==0:
         print('No file meets the condition!')
@@ -136,14 +140,14 @@ if __name__ == '__main__':
         if not isdir(envfolder):
             mkdir(envfolder)
             print('Created a new env folder {}..'.format(envfolder))
-        # else: 
+        # else:
         #     print('Env folder {} already exists..'.format(envfolder))
 
         levelfolder = envfolder + '/' + difflevel
         if not isdir(levelfolder):
             mkdir(levelfolder)
             print('  Created a new level folder {}..'.format(levelfolder))
-        # else: 
+        # else:
         #     print('Level folder {} already exists..'.format(levelfolder))
 
         targetfile = levelfolder + '/' + filename
@@ -152,7 +156,7 @@ if __name__ == '__main__':
             exit()
 
         if args.azcopy:
-            cmd = 'azcopy copy ' + fileurl + ' ' + targetfile 
+            cmd = 'azcopy copy ' + fileurl + ' ' + targetfile
         else:
             cmd = 'wget -r -O ' + targetfile + ' ' + fileurl
         print cmd
